@@ -13,27 +13,29 @@
 -module(main).
 -export([main/0]).
 
-worker(Parent, X) ->
+worker(Parent, X, Function) ->
   spawn(fun() ->
-      Result = lists:max(X),
+      Result = Function(X),
       Parent ! {self(), Result}
   end).
 
 join(Pids) ->
   [receive {Pid, Result} -> Result end || Pid <- Pids].
 
-reduce2d(Matrix) ->
+reduce2d(Matrix, Agregator, Function) ->
   Parent = self(),
-  Pids = [worker(Parent, X) || X <- Matrix],
-  lists:max(join(Pids)).
+  Pids = [worker(Parent, X, Function) || X <- Matrix],
+  Agregator(join(Pids)).
 
 max_matrix(Matrix) ->
   %lists:foldl(fun(X, Max) -> max(lists:max(X), Max) end, 0, Matrix).
-  reduce2d(Matrix).
+  reduce2d(Matrix, fun lists:max/1, fun lists:max/1).
 
 count_equal(Matrix, Value) ->
-  lists:foldl(fun(X, Count) -> Count + length(
-          lists:filter(fun(Y) -> Y == Value end, X)) end, 0, Matrix).
+  reduce2d(Matrix, fun lists:sum/1,
+    fun(X) -> length(lists:filter(fun(Y) -> Y == Value end, X)) end).
+  %lists:foldl(fun(X, Count) -> Count + length(
+          %lists:filter(fun(Y) -> Y == Value end, X)) end, 0, Matrix).
 
 fill_histogram(Matrix, 0) -> [count_equal(Matrix, 0)];
 fill_histogram(Matrix, Nmax) ->
