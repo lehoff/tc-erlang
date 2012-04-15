@@ -1,28 +1,31 @@
 %
-% randmat: random number generation
+% thresh: histogram thresholding
 %
 % input:
+%   matrix: the integer matrix to be thresholded
 %   nrows, ncols: the number of rows and columns
-%   s: the seed
+%   percent: the percentage of cells to retain
 %
 % output:
-%   matrix: a nrows x ncols integer matrix
+%   mask: a boolean matrix filled with true for cells that are kept
 %
 
 -module(main).
 -export([main/0]).
--define(INT_MAX,2147483647).
 
-randvet(0) -> [];
-randvet(Ncols) -> [random:uniform(?INT_MAX) | randvet(Ncols - 1)].
+thresh(Nrows, Ncols, Matrix, Percent) -> [Ncols, Nrows, Matrix, Percent].
 
-randmat_impl(0, _) -> [];
-randmat_impl(Nrows, Ncols) -> [randvet(Ncols) | randmat_impl(Nrows - 1, Ncols)].
+read_vector(0) -> [];
+read_vector(Ncols) -> {ok, [Value]} = io:fread("", "~d"),
+  [ Value | read_vector(Ncols - 1)].
 
-randmat(Nrows, Ncols, S) -> random:seed(S, S, S),
-  randmat_impl(Nrows, Ncols).
+read_matrix(0, _) -> [];
+read_matrix(Nrows, Ncols) -> [read_vector(Ncols) |
+    read_matrix(Nrows - 1, Ncols)].
 
 main() ->
-  {ok, [Nrows, Ncols, S]} = io:fread("","~d~d~d"),
-  io:format("~w~n\n", [randmat(Nrows, Ncols, S)]).
+  {ok, [Nrows, Ncols]} = io:fread("","~d~d"),
+  Matrix = read_matrix(Nrows, Ncols),
+  {ok, [Percent]} = io:fread("", "~d"),
+  io:format("~w~n\n", [thresh(Nrows, Ncols, Matrix, Percent)]).
 
