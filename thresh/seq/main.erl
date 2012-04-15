@@ -29,7 +29,11 @@ fill_histogram(Matrix, 0) -> [count_equal(Matrix, 0)];
 fill_histogram(Matrix, Nmax) ->
   [count_equal(Matrix, Nmax) | fill_histogram(Matrix, Nmax - 1)].
 
-get_threshold(Histogram, Count) -> 0.
+get_threshold(Index, [], Count) -> 0;
+get_threshold(Index, [Head | Tail], Count) ->
+  if Count - Head < 0 -> Index;
+    true -> get_threshold(Index - 1, Tail, Count - Head)
+  end.
 
 filter(Matrix, Threshold) -> [[]].
 
@@ -37,7 +41,7 @@ thresh(Nrows, Ncols, Matrix, Percent) ->
   Nmax = max_matrix(Matrix),
   Histogram = fill_histogram(Matrix, Nmax),
   Count = (Nrows * Ncols * Percent) / 100,
-  Threshold = get_threshold(Histogram, Count),
+  Threshold = get_threshold(Nmax, Histogram, Count),
   Mask = filter(Matrix, Threshold),
   io:format("Nmax: ~w~nHistogram: ~w~nCount: ~w~nThreshold: ~w~nMask: ~w~n",
     [Nmax, Histogram, Count, Threshold, Mask]),
