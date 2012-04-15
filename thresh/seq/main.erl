@@ -18,25 +18,29 @@ max(A, B) ->
     true -> B
   end.
 
-max_vector([]) -> 0;
-max_vector([Head | Rest]) -> max(Head, max_vector(Rest)).
+max_matrix(Matrix) ->
+  lists:foldl(fun(X, Max) -> max(lists:max(X), Max) end, 0, Matrix).
 
-max_matrix(_, _, []) -> 0;
-max_matrix(_, _, [Head | Rest]) -> max(max_vector(Head),
-    max_matrix(0, 0, Rest)).
+count_equal(Matrix, Value) ->
+  lists:foldl(fun(X, Count) -> Count + length(
+          lists:filter(fun(Y) -> Y == Value end, X)) end, 0, Matrix).
 
-fill_histogram(Nrows, Ncols, Matrix, Nmax) -> [0].
+fill_histogram(Matrix, 0) -> [count_equal(Matrix, 0)];
+fill_histogram(Matrix, Nmax) ->
+  [count_equal(Matrix, Nmax) | fill_histogram(Matrix, Nmax - 1)].
 
 get_threshold(Histogram, Count) -> 0.
 
-filter(Nrows, Ncols, Matrix, Threshold) -> [[]].
+filter(Matrix, Threshold) -> [[]].
 
 thresh(Nrows, Ncols, Matrix, Percent) ->
-  Nmax = max_matrix(Nrows, Ncols, Matrix),
-  Histogram = fill_histogram(Nrows, Ncols, Matrix, Nmax),
+  Nmax = max_matrix(Matrix),
+  Histogram = fill_histogram(Matrix, Nmax),
   Count = (Nrows * Ncols * Percent) / 100,
   Threshold = get_threshold(Histogram, Count),
-  Mask = filter(Nrows, Ncols, Matrix, Threshold),
+  Mask = filter(Matrix, Threshold),
+  io:format("Nmax: ~w~nHistogram: ~w~nCount: ~w~nThreshold: ~w~nMask: ~w~n",
+    [Nmax, Histogram, Count, Threshold, Mask]),
   Mask.
 
 read_vector(0) -> [];
