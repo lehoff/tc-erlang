@@ -13,13 +13,23 @@
 -module(main).
 -export([main/0]).
 
-max(A, B) ->
-  if A > B -> A;
-    true -> B
-  end.
+worker(Parent, X) ->
+  spawn(fun() ->
+      Result = lists:max(X),
+      Parent ! {self(), Result}
+  end).
+
+join(Pids) ->
+  [receive {Pid, Result} -> Result end || Pid <- Pids].
+
+reduce2d(Matrix) ->
+  Parent = self(),
+  Pids = [worker(Parent, X) || X <- Matrix],
+  lists:max(join(Pids)).
 
 max_matrix(Matrix) ->
-  lists:foldl(fun(X, Max) -> max(lists:max(X), Max) end, 0, Matrix).
+  %lists:foldl(fun(X, Max) -> max(lists:max(X), Max) end, 0, Matrix).
+  reduce2d(Matrix).
 
 count_equal(Matrix, Value) ->
   lists:foldl(fun(X, Count) -> Count + length(
