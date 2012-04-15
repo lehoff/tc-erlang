@@ -29,13 +29,15 @@ fill_histogram(Matrix, 0) -> [count_equal(Matrix, 0)];
 fill_histogram(Matrix, Nmax) ->
   [count_equal(Matrix, Nmax) | fill_histogram(Matrix, Nmax - 1)].
 
-get_threshold(Index, [], Count) -> 0;
+get_threshold(-1, [], _) -> 0;
 get_threshold(Index, [Head | Tail], Count) ->
   if Count - Head < 0 -> Index;
     true -> get_threshold(Index - 1, Tail, Count - Head)
   end.
 
-filter(Matrix, Threshold) -> [[]].
+filter(Matrix, Threshold) ->
+  lists:map(fun(X) ->
+        lists:map(fun(Y) -> Y >= Threshold end, X) end, Matrix).
 
 thresh(Nrows, Ncols, Matrix, Percent) ->
   Nmax = max_matrix(Matrix),
@@ -43,8 +45,6 @@ thresh(Nrows, Ncols, Matrix, Percent) ->
   Count = (Nrows * Ncols * Percent) / 100,
   Threshold = get_threshold(Nmax, Histogram, Count),
   Mask = filter(Matrix, Threshold),
-  io:format("Nmax: ~w~nHistogram: ~w~nCount: ~w~nThreshold: ~w~nMask: ~w~n",
-    [Nmax, Histogram, Count, Threshold, Mask]),
   Mask.
 
 read_vector(0) -> [];
