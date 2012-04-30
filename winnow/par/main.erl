@@ -69,9 +69,20 @@ get_points(0, _, _) -> [];
 get_points(Nelts, [{_, {I, J}} | Tail], Chunk) ->
   [ {I, J} | get_points(Nelts - 1, drop(Tail, Chunk - 1), Chunk)].
 
+sort_impl(L) ->
+  Parent = self(),
+  join([ spawn(fun() -> Parent ! {self(), sort(X)} end) || X <- L ]).
+
+sort([]) -> [];
+sort([Pivot | Tail]) ->
+  Left = [X || X <- Tail, X < Pivot],
+  Right = [X || X <- Tail, X >= Pivot],
+  Results = sort_impl([Left, Right]),
+  hd(Results) ++ [Pivot] ++ hd(tl(Results)).
+
 winnow(_, _, Matrix, Mask, Nelts) ->
   Values = get_values(0, Matrix, Mask),
-  Sorted = lists:sort(Values),
+  Sorted = sort(Values),
   N = length(Sorted),
   Chunk = N div Nelts,
   Points = get_points(Nelts, Sorted, Chunk),
