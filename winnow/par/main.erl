@@ -24,20 +24,6 @@ get_values_vector(Line, Col, [ValuesHead | ValuesTail], [
     true -> Rest
   end.
 
-reduce2d_worker(Parent, X, Function) ->
-  spawn(fun() ->
-      Result = Function(X),
-      Parent ! {self(), Result}
-  end).
-
-reduce2d_join(Pids) ->
-  [receive {Pid, Result} -> Result end || Pid <- Pids].
-
-reduce2d(Matrix, Agregator, Function) ->
-  Parent = self(),
-  Pids = [reduce2d_worker(Parent, X, Function) || X <- Matrix],
-  Agregator(reduce2d_join(Pids)).
-
 join(Pids) ->
   [receive {Pid, Result} -> Result end || Pid <- Pids].
 

@@ -1,5 +1,4 @@
 all: main
-	erl -noshell -s main main -s init stop < main.in
 	erl -noshell -s main main -s init stop < main.in > main.out
 	diff main.out main.gold
 	erl -noshell -s main main -s init stop < main2.in > main2.out
