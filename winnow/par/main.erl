@@ -24,10 +24,43 @@ get_values_vector(Line, Col, [ValuesHead | ValuesTail], [
     true -> Rest
   end.
 
-get_values(_, [], []) -> [];
-get_values(Line, [MatrixHead | MatrixTail], [MaskHead | MaskTail]) ->
-  get_values_vector(Line, 0, MatrixHead, MaskHead) ++ get_values(
-    Line + 1, MatrixTail, MaskTail).
+reduce2d_worker(Parent, X, Function) ->
+  spawn(fun() ->
+      Result = Function(X),
+      Parent ! {self(), Result}
+  end).
+
+reduce2d_join(Pids) ->
+  [receive {Pid, Result} -> Result end || Pid <- Pids].
+
+reduce2d(Matrix, Agregator, Function) ->
+  Parent = self(),
+  Pids = [reduce2d_worker(Parent, X, Function) || X <- Matrix],
+  Agregator(reduce2d_join(Pids)).
+
+join(Pids) ->
+  [receive {Pid, Result} -> Result end || Pid <- Pids].
+
+get_values_worker(Parent, Line, Col, Values, Mask) ->
+  spawn(fun() ->
+        Result = get_values_vector(Line, Col, Values, Mask),
+        Parent ! {self(), Result}
+  end).
+
+get_values_impl(_, _, [], []) -> [];
+get_values_impl(Parent, Line, [MatrixHead | MatrixTail], [MaskHead |
+    MaskTail]) ->
+  [get_values_worker(Parent, Line, 0, MatrixHead, MaskHead) |
+    get_values_impl(Parent, Line + 1, MatrixTail, MaskTail)].
+
+append([]) -> [];
+append([Head | Tail]) -> Head ++ append(Tail).
+
+get_values(Line, Matrix, Mask) ->
+  Parent = self(),
+  Pids = get_values_impl(Parent, Line, Matrix, Mask),
+  Results = append(join(Pids)),
+  Results.
 
 drop(L, 0) -> L;
 drop([_ | T], I) -> drop (T, I - 1).
