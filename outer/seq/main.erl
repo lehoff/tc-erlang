@@ -1,61 +1,47 @@
 %
-% winnow: weighted point selection
+% outer: outer product
 %
 % input:
-%   matrix: an integer matrix, whose values are used as masses
-%   mask: a boolean matrix showing which points are eligible for
-%     consideration
-%   nrows, ncols: the number of rows and columns
-%   nelts: the number of points to select
+%   points: a vector of (x, y) points
+%   nelts: the number of points
 %
 % output:
-%   points: a vector of (x, y) points
+%   matrix: a real matrix, whose values are filled with inter-point
+%     distances
+%   vector: a real vector, whose values are filled with origin-to-point
+%     distances
 %
 
 -module(main).
 -export([main/0]).
 
-get_values_vector(_, _, [], []) -> [];
-get_values_vector(Line, Col, [ValuesHead | ValuesTail], [
-    MaskHead | MaskTail]) ->
-  Rest = get_values_vector(Line, Col + 1, ValuesTail, MaskTail),
-  if MaskHead == 1 -> [
-        {ValuesHead, {Line, Col}} | Rest];
-    true -> Rest
+sqr(X) ->
+  X * X.
+
+distance({Ax, Ay}, {Bx, By}) ->
+  math:sqrt(sqr(Ax - Bx) + sqr(Ay - By)).
+
+fix_diagonal_vector(_, _, [], _, _, _) -> [];
+fix_diagonal_vector(Line, Col, [Head | Tail], Point, Nelts, Nmax) ->
+  if Line == Col -> [Nelts * Nmax | Tail];
+    true -> [ Head | fix_diagonal_vector(
+          Line, Col + 1, Tail, Point, Nelts, Nmax)]
   end.
 
-get_values(_, [], []) -> [];
-get_values(Line, [MatrixHead | MatrixTail], [MaskHead | MaskTail]) ->
-  get_values_vector(Line, 0, MatrixHead, MaskHead) ++ get_values(
-    Line + 1, MatrixTail, MaskTail).
+fix_diagonal(_, [], _, _) -> [];
+fix_diagonal(Line, [Head | Tail], [HeadPoints | TailPoints], Nelts) ->
+  [ fix_diagonal_vector(Line, 0, Head, HeadPoints, Nelts, lists:max(Head)) |
+    fix_diagonal(Line + 1, Tail, TailPoints, Nelts)].
 
-drop(L, 0) -> L;
-drop([_ | T], I) -> drop (T, I - 1).
+outer(Nelts, Points) ->
+  {fix_diagonal(0, [ [ distance(A, B) || A <- Points] || B <- Points ], Points, Nelts), [distance({0, 0}, A) || A <- Points]}.
 
-get_points(0, _, _) -> [];
-get_points(Nelts, [{_, {I, J}} | Tail], Chunk) ->
-  [ {I, J} | get_points(Nelts - 1, drop(Tail, Chunk - 1), Chunk)].
-
-winnow(_, _, Matrix, Mask, Nelts) ->
-  Values = get_values(0, Matrix, Mask),
-  Sorted = lists:sort(Values),
-  N = length(Sorted),
-  Chunk = N div Nelts,
-  Points = get_points(Nelts, Sorted, Chunk),
-  [Points].
-
-read_vector(0) -> [];
-read_vector(Ncols) -> {ok, [Value]} = io:fread("", "~d"),
-  [ Value | read_vector(Ncols - 1)].
-
-read_matrix(0, _) -> [];
-read_matrix(Nrows, Ncols) -> [read_vector(Ncols) |
-    read_matrix(Nrows - 1, Ncols)].
+read_vector_of_points(0) -> [];
+read_vector_of_points(Nelts) -> {ok, [X, Y]} = io:fread("", "~d~d"),
+  [ {X, Y} | read_vector_of_points(Nelts - 1)].
 
 main() ->
-  {ok, [Nrows, Ncols]} = io:fread("","~d~d"),
-  Matrix = read_matrix(Nrows, Ncols),
-  Mask = read_matrix(Nrows, Ncols),
-  {ok, [Nelts]} = io:fread("", "~d"),
-  io:format("~w~n\n", [winnow(Nrows, Ncols, Matrix, Mask, Nelts)]).
+  {ok, [Nelts]} = io:fread("","~d"),
+  Points = read_vector_of_points(Nelts),
+  io:format("~w~n\n", [outer(Nelts, Points)]).
 
