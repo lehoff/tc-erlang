@@ -12,8 +12,8 @@
 %     distances
 %
 
--module(main).
--export([main/0]).
+-module(outer).
+-export([outer/2]).
 
 join(Pids) ->
   [receive {Pid, Result} -> Result end || Pid <- Pids].
@@ -49,9 +49,4 @@ outer(Nelts, Points) ->
 read_vector_of_points(0) -> [];
 read_vector_of_points(Nelts) -> {ok, [X, Y]} = io:fread("", "~d~d"),
   [ {X, Y} | read_vector_of_points(Nelts - 1)].
-
-main() ->
-  {ok, [Nelts]} = io:fread("","~d"),
-  Points = read_vector_of_points(Nelts),
-  io:format("~w~n\n", [outer(Nelts, Points)]).
 

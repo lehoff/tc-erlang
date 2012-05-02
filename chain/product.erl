@@ -10,8 +10,8 @@
 %   result: a real vector, whose values are the result of the product
 %
 
--module(main).
--export([main/0]).
+-module(product).
+-export([product/3]).
 
 join(Pids) ->
   [receive {Pid, Result} -> Result end || Pid <- Pids].
@@ -29,10 +29,4 @@ read_vector(Nelts) -> {ok, [X]} = io:fread("", "~f"),
 read_matrix(0, _) -> [];
 read_matrix(Nelts, Total) ->
   [ read_vector(Total) | read_matrix(Nelts - 1, Total)].
-
-main() ->
-  {ok, [Nelts]} = io:fread("","~d"),
-  Matrix = read_matrix(Nelts, Nelts),
-  Vector = read_vector(Nelts),
-  io:format("~w~n\n", [product(Nelts, Matrix, Vector)]).
 

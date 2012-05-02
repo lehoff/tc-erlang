@@ -9,8 +9,8 @@
 %   matrix: a nrows x ncols integer matrix
 %
 
--module(main).
--export([main/0]).
+-module(randmat).
+-export([randmat/3]).
 -define(INT_MAX,2147483647).
 
 randvet_impl(0) -> [];
@@ -49,8 +49,3 @@ randmat(Nrows, Ncols, S) ->
   All = randmat_impl(Nrows, Ncols, S),
   send_self(All),
   join(Nrows).
-
-main() ->
-  {ok, [Nrows, Ncols, S]} = io:fread("","~d~d~d"),
-  io:format("~w~n", [randmat(Nrows, Ncols, S)]).
-

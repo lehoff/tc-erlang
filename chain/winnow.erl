@@ -12,8 +12,8 @@
 %   points: a vector of (x, y) points
 %
 
--module(main).
--export([main/0]).
+-module(winnow).
+-export([winnow/5]).
 
 get_values_vector(_, _, [], []) -> [];
 get_values_vector(Line, Col, [ValuesHead | ValuesTail], [
@@ -81,11 +81,4 @@ read_vector(Ncols) -> {ok, [Value]} = io:fread("", "~d"),
 read_matrix(0, _) -> [];
 read_matrix(Nrows, Ncols) -> [read_vector(Ncols) |
     read_matrix(Nrows - 1, Ncols)].
-
-main() ->
-  {ok, [Nrows, Ncols]} = io:fread("","~d~d"),
-  Matrix = read_matrix(Nrows, Ncols),
-  Mask = read_matrix(Nrows, Ncols),
-  {ok, [Nelts]} = io:fread("", "~d"),
-  io:format("~w~n\n", [winnow(Nrows, Ncols, Matrix, Mask, Nelts)]).
 

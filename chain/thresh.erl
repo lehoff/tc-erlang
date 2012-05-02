@@ -10,8 +10,8 @@
 %   mask: a boolean matrix filled with true for cells that are kept
 %
 
--module(main).
--export([main/0]).
+-module(thresh).
+-export([thresh/4]).
 
 reduce2d_worker(Parent, X, Function) ->
   spawn(fun() ->
@@ -63,10 +63,4 @@ read_vector(Ncols) -> {ok, [Value]} = io:fread("", "~d"),
 read_matrix(0, _) -> [];
 read_matrix(Nrows, Ncols) -> [read_vector(Ncols) |
     read_matrix(Nrows - 1, Ncols)].
-
-main() ->
-  {ok, [Nrows, Ncols]} = io:fread("","~d~d"),
-  Matrix = read_matrix(Nrows, Ncols),
-  {ok, [Percent]} = io:fread("", "~d"),
-  io:format("~w~n\n", [thresh(Nrows, Ncols, Matrix, Percent)]).
 
