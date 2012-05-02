@@ -15,6 +15,9 @@
 -module(main).
 -export([main/0]).
 
+join(Pids) ->
+  [receive {Pid, Result} -> Result end || Pid <- Pids].
+
 sqr(X) ->
   X * X.
 
@@ -30,11 +33,18 @@ fix_diagonal_vector(Line, Col, [Head | Tail], Point, Nelts, Nmax) ->
 
 fix_diagonal(_, [], _, _) -> [];
 fix_diagonal(Line, [Head | Tail], [HeadPoints | TailPoints], Nelts) ->
-  [ fix_diagonal_vector(Line, 0, Head, HeadPoints, Nelts, lists:max(Head)) |
+  Parent = self(),
+  [spawn(fun() -> Parent ! {self(),
+            fix_diagonal_vector(Line, 0, Head, HeadPoints, Nelts,
+              lists:max(Head))} end) |
     fix_diagonal(Line + 1, Tail, TailPoints, Nelts)].
 
 outer(Nelts, Points) ->
-  {fix_diagonal(0, [ [ distance(A, B) || A <- Points] || B <- Points ], Points, Nelts), [distance({0, 0}, A) || A <- Points]}.
+  Parent = self(),
+  {join(fix_diagonal(0, join([spawn(fun() -> Parent ! {self(),
+                  [distance(A, B) || A <- Points]} end) || B <- Points]),
+      Points, Nelts)),
+  [distance({0, 0}, A) || A <- Points]}.
 
 read_vector_of_points(0) -> [];
 read_vector_of_points(Nelts) -> {ok, [X, Y]} = io:fread("", "~d~d"),
