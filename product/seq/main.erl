@@ -1,47 +1,32 @@
 %
-% outer: outer product
+% product: a matrix-vector product
 %
 % input:
-%   points: a vector of (x, y) points
-%   nelts: the number of points
+%   nelts: the number of elements
+%   matrix: a real matrix
+%   vector: a real vector
 %
 % output:
-%   matrix: a real matrix, whose values are filled with inter-point
-%     distances
-%   vector: a real vector, whose values are filled with origin-to-point
-%     distances
+%   result: a real vector, whose values are the result of the product
 %
 
 -module(main).
 -export([main/0]).
 
-sqr(X) ->
-  X * X.
+product(_, Matrix, Vector) ->
+  [ lists:sum([ A * B || {A, B} <- lists:zip(L, Vector)]) || L <- Matrix].
 
-distance({Ax, Ay}, {Bx, By}) ->
-  math:sqrt(sqr(Ax - Bx) + sqr(Ay - By)).
+read_vector(0) -> [];
+read_vector(Nelts) -> {ok, [X]} = io:fread("", "~f"),
+  [ X | read_vector(Nelts - 1)].
 
-fix_diagonal_vector(_, _, [], _, _, _) -> [];
-fix_diagonal_vector(Line, Col, [Head | Tail], Point, Nelts, Nmax) ->
-  if Line == Col -> [Nelts * Nmax | Tail];
-    true -> [ Head | fix_diagonal_vector(
-          Line, Col + 1, Tail, Point, Nelts, Nmax)]
-  end.
-
-fix_diagonal(_, [], _, _) -> [];
-fix_diagonal(Line, [Head | Tail], [HeadPoints | TailPoints], Nelts) ->
-  [ fix_diagonal_vector(Line, 0, Head, HeadPoints, Nelts, lists:max(Head)) |
-    fix_diagonal(Line + 1, Tail, TailPoints, Nelts)].
-
-outer(Nelts, Points) ->
-  {fix_diagonal(0, [ [ distance(A, B) || A <- Points] || B <- Points ], Points, Nelts), [distance({0, 0}, A) || A <- Points]}.
-
-read_vector_of_points(0) -> [];
-read_vector_of_points(Nelts) -> {ok, [X, Y]} = io:fread("", "~d~d"),
-  [ {X, Y} | read_vector_of_points(Nelts - 1)].
+read_matrix(0, _) -> [];
+read_matrix(Nelts, Total) ->
+  [ read_vector(Total) | read_matrix(Nelts - 1, Total)].
 
 main() ->
   {ok, [Nelts]} = io:fread("","~d"),
-  Points = read_vector_of_points(Nelts),
-  io:format("~w~n\n", [outer(Nelts, Points)]).
+  Matrix = read_matrix(Nelts, Nelts),
+  Vector = read_vector(Nelts),
+  io:format("~w~n\n", [product(Nelts, Matrix, Vector)]).
 
