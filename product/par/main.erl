@@ -13,8 +13,14 @@
 -module(main).
 -export([main/0]).
 
+join(Pids) ->
+  [receive {Pid, Result} -> Result end || Pid <- Pids].
+
 product(_, Matrix, Vector) ->
-  [ lists:sum([ A * B || {A, B} <- lists:zip(L, Vector)]) || L <- Matrix].
+  Parent = self(),
+  join([spawn(fun() -> Parent ! {self(),
+      lists:sum([ A * B || {A, B} <- lists:zip(L, Vector)])} end)
+    || L <- Matrix]).
 
 read_vector(0) -> [];
 read_vector(Nelts) -> {ok, [X]} = io:fread("", "~f"),
