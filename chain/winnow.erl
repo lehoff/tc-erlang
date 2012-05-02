@@ -19,7 +19,7 @@ get_values_vector(_, _, [], []) -> [];
 get_values_vector(Line, Col, [ValuesHead | ValuesTail], [
     MaskHead | MaskTail]) ->
   Rest = get_values_vector(Line, Col + 1, ValuesTail, MaskTail),
-  if MaskHead == 1 -> [
+  if MaskHead == true -> [
         {ValuesHead, {Line, Col}} | Rest];
     true -> Rest
   end.
@@ -72,13 +72,4 @@ winnow(_, _, Matrix, Mask, Nelts) ->
   N = length(Sorted),
   Chunk = N div Nelts,
   Points = get_points(Nelts, Sorted, Chunk),
-  [Points].
-
-read_vector(0) -> [];
-read_vector(Ncols) -> {ok, [Value]} = io:fread("", "~d"),
-  [ Value | read_vector(Ncols - 1)].
-
-read_matrix(0, _) -> [];
-read_matrix(Nrows, Ncols) -> [read_vector(Ncols) |
-    read_matrix(Nrows - 1, Ncols)].
-
+  Points.

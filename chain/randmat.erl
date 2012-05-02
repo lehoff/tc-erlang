@@ -11,7 +11,7 @@
 
 -module(randmat).
 -export([randmat/3]).
--define(INT_MAX,2147483647).
+-define(INT_MAX,1000).
 
 randvet_impl(0) -> [];
 randvet_impl(Ncols) -> [random:uniform(?INT_MAX) | randvet_impl(Ncols - 1)].

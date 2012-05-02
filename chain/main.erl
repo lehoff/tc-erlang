@@ -14,8 +14,19 @@
 -module(main).
 -export([main/0]).
 -import(randmat, [randmat/3]).
+-import(thresh, [thresh/4]).
+-import(winnow, [winnow/5]).
+-import(outer, [outer/2]).
+-import(product, [product/3]).
 
 main() ->
-  {ok, [Nelts, RandmatSeed]} = io:fread("","~d~d"),
-  io:format("~w~n", [randmat:randmat(Nelts, Nelts, RandmatSeed)]).
+  {ok, [Nelts, RandmatSeed, ThreshPercent, WinnowNelts]} =
+      io:fread("","~d~d~d~d"),
+  RandmatMatrix = randmat:randmat(Nelts, Nelts, RandmatSeed),
+  ThreshMask = thresh:thresh(Nelts, Nelts, RandmatMatrix, ThreshPercent),
+  WinnowPoints = winnow:winnow(Nelts, Nelts, RandmatMatrix, ThreshMask,
+    WinnowNelts),
+  {OuterMatrix, OuterVector} = outer:outer(WinnowNelts, WinnowPoints),
+  ProductResult = product:product(WinnowNelts, OuterMatrix, OuterVector),
+  io:format("~w~n", [ProductResult]).
 

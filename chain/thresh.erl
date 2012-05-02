@@ -55,12 +55,3 @@ thresh(Nrows, Ncols, Matrix, Percent) ->
   Threshold = get_threshold(Nmax, Histogram, Count),
   Mask = filter(Matrix, Threshold),
   Mask.
-
-read_vector(0) -> [];
-read_vector(Ncols) -> {ok, [Value]} = io:fread("", "~d"),
-  [ Value | read_vector(Ncols - 1)].
-
-read_matrix(0, _) -> [];
-read_matrix(Nrows, Ncols) -> [read_vector(Ncols) |
-    read_matrix(Nrows - 1, Ncols)].
-

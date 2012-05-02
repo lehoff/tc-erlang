@@ -45,8 +45,3 @@ outer(Nelts, Points) ->
                   [distance(A, B) || A <- Points]} end) || B <- Points]),
       Points, Nelts)),
   [distance({0, 0}, A) || A <- Points]}.
-
-read_vector_of_points(0) -> [];
-read_vector_of_points(Nelts) -> {ok, [X, Y]} = io:fread("", "~d~d"),
-  [ {X, Y} | read_vector_of_points(Nelts - 1)].
-

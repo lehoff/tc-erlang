@@ -21,12 +21,3 @@ product(_, Matrix, Vector) ->
   join([spawn(fun() -> Parent ! {self(),
       lists:sum([ A * B || {A, B} <- lists:zip(L, Vector)])} end)
     || L <- Matrix]).
-
-read_vector(0) -> [];
-read_vector(Nelts) -> {ok, [X]} = io:fread("", "~f"),
-  [ X | read_vector(Nelts - 1)].
-
-read_matrix(0, _) -> [];
-read_matrix(Nelts, Total) ->
-  [ read_vector(Total) | read_matrix(Nelts - 1, Total)].
-
