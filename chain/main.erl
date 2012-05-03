@@ -10,7 +10,6 @@
 % output:
 %   result: a real vector, whose values are the result of the final product
 %
-
 -module(main).
 -export([main/0]).
 -import(randmat, [randmat/3]).
