@@ -15,14 +15,11 @@
 -module(outer).
 -export([outer/2]).
 
-join(Pids) ->
-  [receive {Pid, Result} -> Result end || Pid <- Pids].
+join(Pids) -> [receive {Pid, Result} -> Result end || Pid <- Pids].
 
-sqr(X) ->
-  X * X.
+sqr(X) -> X * X.
 
-distance({Ax, Ay}, {Bx, By}) ->
-  math:sqrt(sqr(Ax - Bx) + sqr(Ay - By)).
+distance({Ax, Ay}, {Bx, By}) -> math:sqrt(sqr(Ax - Bx) + sqr(Ay - By)).
 
 fix_diagonal_vector(_, _, [], _, _, _) -> [];
 fix_diagonal_vector(Line, Col, [Head | Tail], Point, Nelts, Nmax) ->

@@ -13,8 +13,7 @@
 -module(product).
 -export([product/3]).
 
-join(Pids) ->
-  [receive {Pid, Result} -> Result end || Pid <- Pids].
+join(Pids) -> [receive {Pid, Result} -> Result end || Pid <- Pids].
 
 product(_, Matrix, Vector) ->
   Parent = self(),

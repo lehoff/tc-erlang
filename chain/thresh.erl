@@ -13,18 +13,12 @@
 -module(thresh).
 -export([thresh/4]).
 
-reduce2d_worker(Parent, X, Function) ->
-  spawn(fun() ->
-      Result = Function(X),
-      Parent ! {self(), Result}
-  end).
-
-reduce2d_join(Pids) ->
-  [receive {Pid, Result} -> Result end || Pid <- Pids].
+reduce2d_join(Pids) -> [receive {Pid, Result} -> Result end || Pid <- Pids].
 
 reduce2d(Matrix, Agregator, Function) ->
   Parent = self(),
-  Pids = [reduce2d_worker(Parent, X, Function) || X <- Matrix],
+  Pids = [spawn(fun() -> Parent ! {self(), Function(X)} end) 
+    || X <- Matrix],
   Agregator(reduce2d_join(Pids)).
 
 max_matrix(Matrix) ->

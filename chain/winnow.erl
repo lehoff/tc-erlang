@@ -19,32 +19,25 @@ get_values_vector(_, _, [], []) -> [];
 get_values_vector(Line, Col, [ValuesHead | ValuesTail], [
     MaskHead | MaskTail]) ->
   Rest = get_values_vector(Line, Col + 1, ValuesTail, MaskTail),
-  if MaskHead == true -> [
-        {ValuesHead, {Line, Col}} | Rest];
+  if MaskHead == true -> [{ValuesHead, {Line, Col}} | Rest];
     true -> Rest
   end.
 
-join(Pids) ->
-  [receive {Pid, Result} -> Result end || Pid <- Pids].
+join(Pids) -> [receive {Pid, Result} -> Result end || Pid <- Pids].
 
-get_values_worker(Parent, Line, Col, Values, Mask) ->
-  spawn(fun() ->
-        Result = get_values_vector(Line, Col, Values, Mask),
-        Parent ! {self(), Result}
-  end).
-
-get_values_impl(_, _, [], []) -> [];
-get_values_impl(Parent, Line, [MatrixHead | MatrixTail], [MaskHead |
+get_values_impl(_, [], []) -> [];
+get_values_impl(Line, [MatrixHead | MatrixTail], [MaskHead |
     MaskTail]) ->
-  [get_values_worker(Parent, Line, 0, MatrixHead, MaskHead) |
-    get_values_impl(Parent, Line + 1, MatrixTail, MaskTail)].
+  Parent = self(),
+  [spawn(fun() -> Parent ! {self(),
+            get_values_vector(Line, 0, MatrixHead, MaskHead)} end) |
+    get_values_impl(Line + 1, MatrixTail, MaskTail)].
 
 append([]) -> [];
 append([Head | Tail]) -> Head ++ append(Tail).
 
 get_values(Line, Matrix, Mask) ->
-  Parent = self(),
-  Pids = get_values_impl(Parent, Line, Matrix, Mask),
+  Pids = get_values_impl(Line, Matrix, Mask),
   Results = append(join(Pids)),
   Results.
 
