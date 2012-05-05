@@ -29,6 +29,7 @@ pid_to_integer(X) ->
 randmat_impl(0, _, _) -> [];
 randmat_impl(Nrows, Ncols, S) ->
   Parent = self(),
+  % parallel for on rows
   [spawn(fun() -> Parent ! {self(), randvet(Ncols, S)} end) |
     randmat_impl(Nrows - 1, Ncols, S)].
 

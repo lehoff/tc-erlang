@@ -29,6 +29,7 @@ get_values_impl(_, [], []) -> [];
 get_values_impl(Line, [MatrixHead | MatrixTail], [MaskHead |
     MaskTail]) ->
   Parent = self(),
+  % parallel for on rows
   [spawn(fun() -> Parent ! {self(),
             get_values_vector(Line, 0, MatrixHead, MaskHead)} end) |
     get_values_impl(Line + 1, MatrixTail, MaskTail)].
@@ -50,6 +51,7 @@ get_points(Nelts, [{_, {I, J}} | Tail], Chunk) ->
 
 sort_impl(L) ->
   Parent = self(),
+  % parallel for on L
   join([ spawn(fun() -> Parent ! {self(), sort(X)} end) || X <- L ]).
 
 sort([]) -> [];

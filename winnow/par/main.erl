@@ -27,6 +27,7 @@ get_values_vector(Line, Col, [ValuesHead | ValuesTail], [
 join(Pids) ->
   [receive {Pid, Result} -> Result end || Pid <- Pids].
 
+% worker, processes and sends the results back
 get_values_worker(Parent, Line, Col, Values, Mask) ->
   spawn(fun() ->
         Result = get_values_vector(Line, Col, Values, Mask),
@@ -36,6 +37,7 @@ get_values_worker(Parent, Line, Col, Values, Mask) ->
 get_values_impl(_, _, [], []) -> [];
 get_values_impl(Parent, Line, [MatrixHead | MatrixTail], [MaskHead |
     MaskTail]) ->
+  % parallel for on rows
   [get_values_worker(Parent, Line, 0, MatrixHead, MaskHead) |
     get_values_impl(Parent, Line + 1, MatrixTail, MaskTail)].
 
@@ -57,6 +59,7 @@ get_points(Nelts, [{_, {I, J}} | Tail], Chunk) ->
 
 sort_impl(L) ->
   Parent = self(),
+  % parallel for on L
   join([ spawn(fun() -> Parent ! {self(), sort(X)} end) || X <- L ]).
 
 sort([]) -> [];

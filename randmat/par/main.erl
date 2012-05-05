@@ -16,6 +16,7 @@
 randvet_impl(0) -> [];
 randvet_impl(Ncols) -> [random:uniform(?INT_MAX) | randvet_impl(Ncols - 1)].
 
+% worker, receives its parent Pid, and sends the result back
 randvet(Ncols, S) ->
   random:seed(S + pid_to_integer(self()), S, S),
   Vet = randvet_impl(Ncols),
@@ -32,6 +33,7 @@ pid_to_integer(X) ->
 
 randmat_impl(0, _, _) -> [];
 randmat_impl(Nrows, Ncols, S) ->
+% parallel for on rows
   [spawn(fun() -> randvet(Ncols, S) end) |
     randmat_impl(Nrows - 1, Ncols, S)].
 

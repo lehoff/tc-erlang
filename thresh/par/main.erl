@@ -13,6 +13,7 @@
 -module(main).
 -export([main/0]).
 
+% worker, processes and sends the results back
 reduce2d_worker(Parent, X, Function) ->
   spawn(fun() ->
       Result = Function(X),
@@ -24,6 +25,7 @@ reduce2d_join(Pids) ->
 
 reduce2d(Matrix, Agregator, Function) ->
   Parent = self(),
+  % parallel for on rows
   Pids = [reduce2d_worker(Parent, X, Function) || X <- Matrix],
   Agregator(reduce2d_join(Pids)).
 
