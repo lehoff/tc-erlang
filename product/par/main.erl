@@ -24,7 +24,8 @@ product(_, Matrix, Vector) ->
     || L <- Matrix]).
 
 read_vector(0) -> [];
-read_vector(Nelts) -> {ok, [X]} = io:fread("", "~f"),
+read_vector(Nelts) ->
+  {ok, [X]} = io:fread("", "~f"),
   [ X | read_vector(Nelts - 1)].
 
 read_matrix(0, _) -> [];
