@@ -54,5 +54,8 @@ randmat(Nrows, Ncols, S) ->
 
 main() ->
   {ok, [Nrows, Ncols, S]} = io:fread("","~d~d~d"),
-  io:format("~w~n", [randmat(Nrows, Ncols, S)]).
+  %io:format("~w~n", [
+      randmat(Nrows, Ncols, S)
+    %])
+  .
 
