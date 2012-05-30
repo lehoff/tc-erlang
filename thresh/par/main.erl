@@ -70,5 +70,8 @@ main() ->
   {ok, [Nrows, Ncols]} = io:fread("","~d~d"),
   Matrix = read_matrix(Nrows, Ncols),
   {ok, [Percent]} = io:fread("", "~d"),
-  io:format("~w~n\n", [thresh(Nrows, Ncols, Matrix, Percent)]).
+  %io:format("~w~n\n", [
+      thresh(Nrows, Ncols, Matrix, Percent)
+  %])
+  .
 
