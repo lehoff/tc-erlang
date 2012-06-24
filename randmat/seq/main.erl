@@ -10,7 +10,7 @@
 %
 
 -module(main).
--export([main/0]).
+-export([main/0, main/1]).
 -define(INT_MAX,2147483647).
 
 randvet(0) -> [];
@@ -22,10 +22,13 @@ randmat_impl(Nrows, Ncols) -> [randvet(Ncols) | randmat_impl(Nrows - 1, Ncols)].
 randmat(Nrows, Ncols, S) -> random:seed(S, S, S),
   randmat_impl(Nrows, Ncols).
 
-main() ->
+main() -> main(['']).
+main(Args) ->
+  [Head | _] = Args,
+  IsBench = string:equal(Head, 'is_bench'),
   {ok, [Nrows, Ncols, S]} = io:fread("","~d~d~d"),
-  %io:format("~w~n\n", [
-      randmat(Nrows, Ncols, S)
-    %])
-    .
-
+  Matrix = randmat(Nrows, Ncols, S),
+  case IsBench of
+    false -> io:format("~w~n\n", [Matrix]);
+    true -> ''
+  end.
