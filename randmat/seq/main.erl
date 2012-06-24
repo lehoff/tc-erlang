@@ -12,15 +12,18 @@
 -module(main).
 -export([main/0, main/1]).
 -define(INT_MAX,2147483647).
+-define(RAND_MAX,100).
+-define(LCG_A,1664525).
+-define(LCG_C,1013904223).
 
-randvet(0) -> [];
-randvet(Ncols) -> [random:uniform(?INT_MAX) | randvet(Ncols - 1)].
+randvet(0, _) -> [];
+randvet(Ncols, S) ->
+  NewS = (?LCG_A * S + ?LCG_C) rem ?INT_MAX,
+  [NewS rem ?RAND_MAX | randvet(Ncols - 1, NewS)].
 
-randmat_impl(0, _) -> [];
-randmat_impl(Nrows, Ncols) -> [randvet(Ncols) | randmat_impl(Nrows - 1, Ncols)].
-
-randmat(Nrows, Ncols, S) -> random:seed(S, S, S),
-  randmat_impl(Nrows, Ncols).
+randmat(0, _, _) -> [];
+randmat(Nrows, Ncols, S) ->
+  [randvet(Ncols, S) | randmat(Nrows - 1, Ncols, S + 1)].
 
 main() -> main(['']).
 main(Args) ->
@@ -28,7 +31,5 @@ main(Args) ->
   IsBench = string:equal(Head, 'is_bench'),
   {ok, [Nrows, Ncols, S]} = io:fread("","~d~d~d"),
   Matrix = randmat(Nrows, Ncols, S),
-  case IsBench of
-    false -> io:format("~w~n\n", [Matrix]);
-    true -> ''
+  case IsBench of false -> io:format("~w~n\n", [Matrix]); true -> ''
   end.
