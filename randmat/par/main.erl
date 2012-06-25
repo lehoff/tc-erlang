@@ -10,52 +10,30 @@
 %
 
 -module(main).
--export([main/0]).
+-export([main/0, main/1]).
 -define(INT_MAX,2147483647).
+-define(RAND_MAX,100).
+-define(LCG_A,1664525).
+-define(LCG_C,1013904223).
 
-randvet_impl(0) -> [];
-randvet_impl(Ncols) -> [random:uniform(?INT_MAX) | randvet_impl(Ncols - 1)].
-
-% worker, receives its parent Pid, and sends the result back
+randvet(0, _) -> [];
 randvet(Ncols, S) ->
-  random:seed(S + pid_to_integer(self()), S, S),
-  Vet = randvet_impl(Ncols),
-  receive
-    {From} ->
-      From ! {Vet}
-  end.
+  NewS = (?LCG_A * S + ?LCG_C) rem ?INT_MAX,
+  [NewS rem ?RAND_MAX | randvet(Ncols - 1, NewS)].
 
-pid_to_integer(X) ->
-  Y = pid_to_list(X),
-  W = string:substr(Y, string:str(Y, ".") + 1, string:len(Y)),
-  Z = string:substr(W, 1, string:str(W, ".") - 1),
-  list_to_integer(Z).
-
-randmat_impl(0, _, _) -> [];
-randmat_impl(Nrows, Ncols, S) ->
-% parallel for on rows
-  [spawn(fun() -> randvet(Ncols, S) end) |
-    randmat_impl(Nrows - 1, Ncols, S)].
-
-send_self([]) -> [];
-send_self([X|Rest]) -> [(X ! {self()}) | send_self(Rest)].
-
-join(0) -> [];
-join(Nrows) ->
-  receive
-    {Vet} ->
-      [Vet | join(Nrows - 1)]
-  end.
+join(Pids) -> [receive {Pid, Result} -> Result end || Pid <- Pids].
 
 randmat(Nrows, Ncols, S) ->
-  All = randmat_impl(Nrows, Ncols, S),
-  send_self(All),
-  join(Nrows).
+  Parent = self(),
+  % parallel_for on rows
+  join([spawn(fun() -> Parent ! {self(), randvet(Ncols, S + Row)} end) ||
+      Row <- lists:seq(1, Nrows)]).
 
-main() ->
+main() -> main(['']).
+main(Args) ->
+  [Head | _] = Args,
+  IsBench = string:equal(Head, 'is_bench'),
   {ok, [Nrows, Ncols, S]} = io:fread("","~d~d~d"),
-  %io:format("~w~n", [
-      randmat(Nrows, Ncols, S)
-    %])
-  .
-
+  Matrix = randmat(Nrows, Ncols, S),
+  case IsBench of false -> io:format("~w~n\n", [Matrix]); true -> ''
+  end.
