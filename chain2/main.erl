@@ -31,7 +31,10 @@ compute() ->
     {ok, [Nelts, RandmatSeed, ThreshPercent, WinnowNelts]} =
         io:fread("","~d~d~d~d"),
     RandmatMatrix = randmat:randmat(Nelts, Nelts, RandmatSeed),
+    %% io:format("RandmatMatrix: ~p~n",
+    %%           [RandmatMatrix]),
     ThreshMask = thresh:thresh(Nelts, Nelts, RandmatMatrix, ThreshPercent),
+    %% io:format("ThreshMask: ~p~n", [ThreshMask]),
     WinnowPoints = winnow:winnow(Nelts, Nelts, RandmatMatrix, ThreshMask,
       WinnowNelts),
     {OuterMatrix, OuterVector} = outer:outer(WinnowNelts, WinnowPoints),
