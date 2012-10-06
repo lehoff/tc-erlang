@@ -16,7 +16,11 @@
 -export([main/0]).
 
 join(Pids) ->
-  [receive {Pid, Result} -> Result end || Pid <- Pids].
+    [receive
+         {Pid, Result} ->
+             Result
+     end
+     || Pid <- Pids].
 
 sqr(X) ->
   X * X.
@@ -24,29 +28,25 @@ sqr(X) ->
 distance({Ax, Ay}, {Bx, By}) ->
   math:sqrt(sqr(Ax - Bx) + sqr(Ay - By)).
 
-fix_diagonal_vector(_, _, [], _, _, _) -> [];
-fix_diagonal_vector(Line, Col, [Head | Tail], Point, Nelts, Nmax) ->
-  if Line == Col -> [Nelts * Nmax | Tail];
-    true -> [ Head | fix_diagonal_vector(
-          Line, Col + 1, Tail, Point, Nelts, Nmax)]
-  end.
+%% @doc calculate all distance pairs and then put the Max times Nelts
+%% into the RowN element instead of the 0 there.
+calc_row(Parent, Nelts, {RowN, RowPairs}) ->
+    Dist = [ distance(X,Y) || {X,Y} <- RowPairs ],
+    Max = lists:max(Dist),
+    {Pre, [_|Post]} = lists:split(RowN - 1, Dist),
+    Parent ! {self(), Pre ++ [Max*Nelts | Post]}.
 
-fix_diagonal(_, [], _, _) -> [];
-fix_diagonal(Line, [Head | Tail], [HeadPoints | TailPoints], Nelts) ->
-  Parent = self(),
-  % parallel for on rows
-  [spawn(fun() -> Parent ! {self(),
-            fix_diagonal_vector(Line, 0, Head, HeadPoints, Nelts,
-              lists:max(Head))} end) |
-    fix_diagonal(Line + 1, Tail, TailPoints, Nelts)].
-
+%% @doc prepare the data into rows of the correct {Xi,Xj} points pairs
+%% and then calculate each row on its own before collecting all the
+%% results. 
 outer(Nelts, Points) ->
-  Parent = self(),
-  % parallel for on rows
-  {join(fix_diagonal(0, join([spawn(fun() -> Parent ! {self(),
-                  [distance(A, B) || A <- Points]} end) || B <- Points]),
-      Points, Nelts)),
-  [distance({0, 0}, A) || A <- Points]}.
+    Parent = self(),
+    Pairs = [[ {A,B} || A <-Points] || B <- Points],
+    RowAndPairs = lists:zip(lists:seq(1,Nelts), Pairs),
+    Pids = [spawn(fun() -> calc_row(Parent, Nelts, Row) end)
+            || Row <- RowAndPairs ],
+    {join(Pids),
+     [distance({0, 0}, A) || A <- Points]}.
 
 read_vector_of_points(0) -> [];
 read_vector_of_points(Nelts) -> {ok, [X, Y]} = io:fread("", "~d~d"),
