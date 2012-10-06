@@ -14,15 +14,19 @@
 
 -module(main).
 -export([main/0]).
+-export([winnow/5]).
 
 get_values_vector(_, _, [], []) -> [];
-get_values_vector(Line, Col, [ValuesHead | ValuesTail], [
-    MaskHead | MaskTail]) ->
-  Rest = get_values_vector(Line, Col + 1, ValuesTail, MaskTail),
-  if MaskHead == 1 -> [
-        {ValuesHead, {Line, Col}} | Rest];
-    true -> Rest
-  end.
+get_values_vector(Line, Col,
+                  [ValuesHead | ValuesTail],
+                  [MaskHead | MaskTail]) ->
+    Rest = get_values_vector(Line, Col + 1, ValuesTail, MaskTail),
+    case MaskHead of
+        1 ->
+            [{ValuesHead, {Line, Col}} | Rest];
+        _ -> Rest
+    end.
+
 
 join(Pids) ->
   [receive {Pid, Result} -> Result end || Pid <- Pids].
@@ -35,8 +39,9 @@ get_values_worker(Parent, Line, Col, Values, Mask) ->
   end).
 
 get_values_impl(_, _, [], []) -> [];
-get_values_impl(Parent, Line, [MatrixHead | MatrixTail], [MaskHead |
-    MaskTail]) ->
+get_values_impl(Parent, Line,
+                [MatrixHead | MatrixTail],
+                [MaskHead | MaskTail]) ->
   % parallel for on rows
   [get_values_worker(Parent, Line, 0, MatrixHead, MaskHead) |
     get_values_impl(Parent, Line + 1, MatrixTail, MaskTail)].
@@ -86,9 +91,13 @@ read_matrix(Nrows, Ncols) -> [read_vector(Ncols) |
     read_matrix(Nrows - 1, Ncols)].
 
 main() ->
-  {ok, [Nrows, Ncols]} = io:fread("","~d~d"),
-  Matrix = read_matrix(Nrows, Ncols),
-  Mask = read_matrix(Nrows, Ncols),
-  {ok, [Nelts]} = io:fread("", "~d"),
-  io:format("~w~n\n", [winnow(Nrows, Ncols, Matrix, Mask, Nelts)]).
+    {ok, [Nrows, Ncols]} = io:fread("","~d~d"),
+    Matrix = read_matrix(Nrows, Ncols),
+    Mask = read_matrix(Nrows, Ncols),
+    {ok, [Nelts]} = io:fread("", "~d"),
+    
+    {Time, Res} = timer:tc(?MODULE, winnow,
+                           [Nrows, Ncols, Matrix, Mask, Nelts]),
+    io:format(standard_error, "time: ~p~n", [Time]),
+    io:format("~w~n\n", [Res]).
 

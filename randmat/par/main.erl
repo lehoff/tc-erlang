@@ -11,6 +11,7 @@
 
 -module(main).
 -export([main/0, main/1]).
+-export([row_proc/3]).
 -define(INT_MAX,2147483647).
 -define(RAND_MAX,100).
 -define(LCG_A,1664525).
@@ -21,19 +22,32 @@ randvet(Ncols, S) ->
   NewS = (?LCG_A * S + ?LCG_C) rem ?INT_MAX,
   [NewS rem ?RAND_MAX | randvet(Ncols - 1, NewS)].
 
-join(Pids) -> [receive {Pid, Result} -> Result end || Pid <- Pids].
+%%join(Pids) -> [receive {Pid, Result} -> Result end || Pid <- Pids].
 
+%% @doc just read all the rows as they are done, do not care about the
+%% order since we are creating a random matrix.
+join(Pids) ->
+    [ receive
+          Result ->
+              Result
+      end
+      || _Pid <- Pids
+    ].
+
+row_proc(Parent, Ncols, S) ->
+    Parent ! randvet(Ncols, S).
+
+
+%% @doc spawn a process to create each row and then collect all the
+%% results. 
 randmat(Nrows, Ncols, S) ->
-  Parent = self(),
-  % parallel_for on rows
-  join([spawn(fun() -> Parent ! {self(), randvet(Ncols, S + Row)} end) ||
-      Row <- lists:seq(1, Nrows)]).
+    join( [ spawn(?MODULE, row_proc, [self(), Ncols, S + Row])
+            || Row <- lists:seq(1, Nrows) ] ).
 
 main() -> main(['']).
-main(Args) ->
-  [Head | _] = Args,
-  IsBench = string:equal(Head, 'is_bench'),
-  {ok, [Nrows, Ncols, S]} = io:fread("","~d~d~d"),
-  Matrix = randmat(Nrows, Ncols, S),
-  case IsBench of false -> io:format("~w~n\n", [Matrix]); true -> ''
-  end.
+main([is_bench|_]) ->
+    '';
+main(_Args) ->
+    {ok, [Nrows, Ncols, S]} = io:fread("","~d~d~d"),
+    Matrix = randmat(Nrows, Ncols, S),
+    io:format("~w~n\n", [Matrix]).
