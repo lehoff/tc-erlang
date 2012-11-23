@@ -1,0 +1,40 @@
+Program 1: Random matrix generation (randmat) This program fills a
+matrix I with pseudo-random integers, given a seed. The output must be
+independent of the number of threads/cores.
+
+Program 2: Histogram thresholding (thresh) Given an integer matrix I
+and a target percentage p, this program constructs a boolean matrix B
+such that B_ij is set if, and only if, no more than p percent of the
+values in I are bigger than I_ij.
+
+Program 3: Weighted point selection (winnow) Each location where a
+mask B (a boolean matrix) is true becomes a candidate point, with a
+weight equal to the integer value in an integer matrix I at that
+location and x and y coordinates equal to its row and column indices.
+The program sorts these candidate points into increasing order by
+weight, and selects nelts evenly-spaced points to create the result
+vector X.
+
+Program 4: Outer product (outer) This program turns a vector X
+containing point positions into a dense, symmetric, diagonally
+dominant matrix A by calculating the distances between each pair of
+points. The diagonal of the matrix is set to the maximum element in
+the respective row times the number of elements of the row. It also
+constructs a real vector V whose values are the distance of each point
+from the origin.
+
+Program 5: Matrix-vector product (product) Given a matrix A and a
+vector V, this program calculates the product A V.
+
+Program 6: Chaining (chain) This problem chains all of the previous
+problems together.
+
+All the programs should understand a flag "--is_bench". This flag
+means that only the size of the inputs is to be read, the inputs
+should be generated on-the-fly, and the outputs should not be written
+to the screen.
+
+Inputs used for performance test: 20000x20000 matrices (randmat,
+thresh, winnow), 1 percent (thresh), 10000 elements (winnow, outer),
+10000x10000 matrix (product). Random integers interval is [0, 100)
+(thresh). Speedup using 1-8 cores.
